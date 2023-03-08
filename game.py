@@ -77,6 +77,55 @@ class Board:
             return 3 # 3 stands for Draw
         
         return 0  # Nobody won yet
+
+    def check_mate(self, player):
+        for col in range(COLS):
+            if self.squares[0][col] == self.squares[1][col] == player and \
+               self.squares[2][col] == 0:
+                return (2, col)
+            if self.squares[0][col] == self.squares[2][col] == player and \
+               self.squares[1][col] == 0:
+                return (1, col)
+            if self.squares[1][col] == self.squares[2][col] == player and \
+               self.squares[0][col] == 0:
+                return (0, col)
+
+        for row in range(ROWS):
+            if self.squares[row][0] == self.squares[row][1] == player and \
+               self.squares[row][2] == 0:
+                return (row, 2)
+            if self.squares[row][0] == self.squares[row][2] == player and \
+               self.squares[row][1] == 0:
+                return (row, 1)
+            if self.squares[row][1] == self.squares[row][2] == player and \
+               self.squares[row][0] == 0:
+                return (row, 0)
+            
+        if self.squares[0][0] == self.squares[1][1] == player and \
+                self.squares[2][2] == 0:
+            return (2, 2)
+        
+        if self.squares[0][0] == self.squares[2][2] == player and \
+                self.squares[1][1] == 0:
+            return (1, 1)
+
+        if self.squares[1][1] == self.squares[2][2] == player and \
+                self.squares[0][0] == 0:
+            return (0,0)
+
+        if self.squares[2][0] == self.squares[1][1] == player and \
+                self.squares[0][2] == 0:
+            return (0,2)
+
+        if self.squares[2][0] == self.squares[0][2] == player and \
+                self.squares[1][1] == 0:
+            return (1, 1)
+        
+        if self.squares[0][2] == self.squares[1][1] == player and \
+                self.squares[2][0] == 0:
+            return (2,0)
+
+        return (-1, -1)  # No checkmate moves available
     
 class Game:
 
@@ -170,14 +219,18 @@ class Game:
         elif case == 2:  # AI wins
             return -1, None
         elif case == 3:  # Draw
-            print("Draw")
             return 0, None
 
         if maximising:
             maximize_value = -1
-            selected_move = None
-            board.get_empty_squares()
+
+            # if there are 2 side-by-side circles with empty space at the 3rd, place circle at the 3rd
+            selected_move = board.check_mate(1)
+            if selected_move != (-1, -1):
+                return 1, selected_move
             
+            board.get_empty_squares()
+
             for row, col in board.empty_squares:
                 temp_board = copy.deepcopy(board)
                 temp_board.mark_square(row, col, 1)
@@ -191,7 +244,12 @@ class Game:
 
         else:
             minimize_value = 1
-            selected_move = None
+            
+            # if there are 2 side-by-side circles with empty space at the 3rd, place circle at the 3rd
+            selected_move = board.check_mate(2)
+            if selected_move != (-1, -1):
+                return -1, selected_move
+            
             board.get_empty_squares()
 
             for row, col in board.empty_squares:
@@ -235,8 +293,10 @@ def main():
 
                         # Strategy: minimax
                         selected_square = game.select_square(game.board, False)[1]
-                
-                        game.make_move(selected_square[0], selected_square[1])
+
+                        game.make_move(
+                            selected_square[0], selected_square[1])
+
                         if game.over:
                             pass
             elif event.type == pygame.KEYDOWN:
